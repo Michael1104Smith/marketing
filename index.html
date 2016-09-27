@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link href="css/style.css" rel="stylesheet">
+<link rel="stylesheet" href="css/jquery-ui.css">
+<body>
+    <div id="marketing">
+        <div id="marketing_header">
+            <div class="dots">
+                <div class="dot dot1"></div>
+                <div class="dot dot2"></div>
+                <div class="dot dot3"></div>
+                <div class="cancel">X</div>
+            </div>
+            <p>Marketing Planning</p>
+        </div>
+        <div id="all_svg">
+            <svg id="header_svg">
+            </svg>
+            <svg id="INQtoMQL">
+            </svg>
+            <svg id="MQLtoSAL">
+            </svg>
+            <svg id="SALtoSQO">
+            </svg>
+            <svg id="AVGDealSize">
+            </svg>
+            <svg id="Pipe">
+            </svg>
+            <svg id="bottom_svg">
+            </svg>
+        </div>
+    </div>
+</body>
+<script>
+    var RectColor1 = '#555', RectColor2 = '#72b0d7', RectColor3 = '#90c4e4';
+    var PolygonColor1 = '#eee', PolygonColor2 = '#fbad56', PolygonColor3 = '#fb8e33', PolygonColor4 = '#e45721';
+    var TextColor1 = '#555', TextColor2 = '#fff', TextColor3 = '#e75b21';
+    var TriColor = '#fff';
+    var rect_overflow = 1;
+    var marketing_width = 360;
+    var rate = 0.01;
+    var header_total_values = [2200000, 6200000];
+    var header_sub_values  = [523000, 1760000];
+    var header_strs = ['PLANNED SPEND', 'ACV TARGET'];
+    var header_bottom_strs = ['Cost per INQ $157',''];
+    var funnel_total_values = [14400,6300,943,283];
+    var funnel_sub_values = [3200,1200,400,40];
+    var funnel_strs = ['INQs NEEDED','MQLs NEEDED','SALs NEEDED','SQOs NEEDED'];
+    var funnel_bottom_strs = ["INQ to MQL 44.5%","MSQL to SAL 15%","SAL to SQO 30%","AVG Deal Size is $46.6K"];
+    var funnel_ids = ['#INQtoMQL','#MQLtoSAL','#SALtoSQO','#AVGDealSize'];
+    var funnel_exist_vals = [0,0,0,110];
+    var header_ids = ['#header_svg','#bottom_svg'];
+    var headerCharts, funnelCharts, tinyfunnelChart;
+
+    function getStr(val,flag){
+        var str;
+        if(val > 1000000){
+            str = (val/1000000)+'M';
+        }else if(val > 1000){
+            str = (val/1000)+'K';
+        }else{
+            str = val;
+        }
+        if(flag == true){
+            str = '$' + str;
+        }
+        return str;
+    }
+</script>
+<script src="js/jquery-1.10.2.js"></script>
+<script src="js/jquery-ui.js"></script>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/header.js"></script>
+<script src="js/funnel.js"></script>
+<script src="js/tiny_funnel.js"></script>
+<script>
+    $(document).ready(function(){
+        $('body').css('min-width',$(window).width()+"px");
+        $('body').css('min-height',$(window).height()+"px");
+        var StartPosX = $('#all_svg').offset().left;
+        var i;
+
+        headerCharts = [];
+
+        for(i = 0; i < 2; i++){
+            header = new HeaderChart();
+            header.id = header_ids[i];
+            header.width = marketing_width;
+            header.height = marketing_width/360*100;
+            header.total_value = header_total_values[i];
+            header.sub_value = header_sub_values[i];
+            header.str = header_strs[i];
+            header.PosX = 10;
+            header.Ind = i;
+            header.bottomStr = header_bottom_strs[i];
+            headerCharts.push(header);
+        }
+
+        for(i = 0; i < 2; i++){
+            headerCharts[i].draw();
+            headerCharts[i].drawPolyLine();
+        }
+
+        funnelCharts = [];
+        for(i = 0; i < 4; i++){
+            var funnelChart = new FunnelChart();
+            funnelChart.id = funnel_ids[i];
+            funnelChart.width = marketing_width;
+            funnelChart.height = marketing_width/360*100;
+            funnelChart.total_value = funnel_total_values[i];
+            funnelChart.sub_value = funnel_sub_values[i];
+            funnelChart.str = funnel_strs[i];
+            funnelChart.PosX = 100;
+            funnelChart.bottomStr = funnel_bottom_strs[i];
+            funnelChart.Ind = i;
+            funnelChart.exist_val = funnel_exist_vals[i];
+            funnelCharts.push(funnelChart);
+        }
+        for(i = 0; i < 4; i++){
+            funnelCharts[i].draw();
+            funnelCharts[i].drawPolyLine();   
+        }
+
+
+        tinyfunnelChart = new TinyFunnelChart();
+        tinyfunnelChart.id = '#Pipe';
+        tinyfunnelChart.width = marketing_width;
+        tinyfunnelChart.height = marketing_width/360*35;
+        tinyfunnelChart.total_value = 13100000;
+        tinyfunnelChart.str = 'NEW PIPE NEEDED';
+        tinyfunnelChart.Ind = 5;
+        tinyfunnelChart.draw();
+
+        $('body').on('mousedown',function(e){
+            var obj = $(e.target);
+            var i;
+            for(i = 0; i < 2; i++){
+                var c = '.header_marker'+i;
+                if(obj.closest(c).length){
+                    headerCharts[i].flag = true;
+                }
+            }
+            for(i = 0; i < 4; i++){
+                var c = '.funnel_marker'+i;
+                if(obj.closest(c).length){
+                    console.log('asdf');
+                    funnelCharts[i].flag = true;
+                }
+            }
+        })
+        $('body').on('mousemove',function(e){
+            var PosX = e.pageX;
+            if(PosX < StartPosX){
+                PosX = StartPosX;
+            }
+            if(PosX > StartPosX + marketing_width){
+                PosX = StartPosX + marketing_width;
+            }
+            var i;
+            for(i = 0; i < 2; i++){
+                if(headerCharts[i].flag == true){
+                    headerCharts[i].PosX = PosX - StartPosX;
+                    headerCharts[i].drawPolyLine();
+                }
+            }
+            for(i = 0; i < 4; i++){
+                if(funnelCharts[i].flag == true){
+                    funnelCharts[i].PosX = PosX - StartPosX;
+                    funnelCharts[i].drawPolyLine();
+                }
+            }
+        })
+        $(window).on('mouseup',function(e){
+            var i;
+            for(i = 0; i < 2; i++){
+                headerCharts[i].flag = false;
+            }
+            for(i = 0; i < 4; i++){
+                funnelCharts[i].flag = false;
+            }
+        })
+    })
+</script>
